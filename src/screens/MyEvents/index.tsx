@@ -1,7 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {View} from 'react-native';
 import {FlatList} from 'react-native-gesture-handler';
+import {FAB} from 'react-native-paper';
 import {AppHeader} from '../../components/AppHeader';
 import LittleCard from '../../components/LittleCard';
 
@@ -19,10 +21,29 @@ const data = [
   {id: '432', title: 'Faisão das Viage', sell: 10},
 ];
 
-const MyEvents: React.FC = () => {
+export const MyEvents: React.FC = () => {
+  const {navigate, goBack} = useNavigation();
+
   return (
-    <View>
-      <AppHeader title="Meus Eventos" />
+    <View style={{flex: 1}}>
+      <AppHeader
+        title="Meus Eventos"
+        backAction
+        onBackActionPress={() => goBack()}
+      />
+
+      <FAB
+        icon="plus"
+        style={{
+          position: 'absolute',
+          margin: 16,
+          right: 0,
+          bottom: 0,
+          zIndex: 5,
+        }}
+        variant="tertiary"
+        onPress={() => console.log('Pressed')}
+      />
 
       <FlatList
         style={{padding: 5}}
@@ -30,12 +51,16 @@ const MyEvents: React.FC = () => {
         keyExtractor={({id}) => id}
         renderItem={({item}) => (
           <View style={{marginBottom: 8}}>
-            <LittleCard title={item.title} subtitle={`Vendas: ${item.sell}`} />
+            <LittleCard
+              onPress={() =>
+                navigate('MyEvent' as never, {id: item.id} as never)
+              }
+              title={item.title}
+              subtitle={`Vendas: ${item.sell}`}
+            />
           </View>
         )}
       />
     </View>
   );
 };
-
-export default MyEvents;
