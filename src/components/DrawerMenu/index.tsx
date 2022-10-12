@@ -8,7 +8,6 @@ import React from 'react';
 import {Avatar, Drawer, Text} from 'react-native-paper';
 
 const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
-  // console.log(props.descriptors['MyEvents']);
   const currentScreen = props.state.routeNames.find(
     (route, key) => props.state.index === key,
   );
@@ -34,7 +33,7 @@ const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
         />
         <Drawer.Item
           label="Compras"
-          active={false}
+          active={currentScreen === 'Purchases'}
           onPress={() => props.navigation.navigate('Purchases')}
           icon="shopping"
         />
@@ -46,13 +45,13 @@ const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
         />
         <Drawer.Item
           label="Vendas"
-          active={false}
+          active={currentScreen === 'Sales'}
           onPress={() => props.navigation.navigate('Sales' as never)}
           icon="cash-multiple"
         />
         <Drawer.Item
           label="Sair"
-          active={false}
+          active={currentScreen === 'Start'}
           onPress={() => props.navigation.navigate('Start' as never)}
           icon="exit-to-app"
         />

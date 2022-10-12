@@ -1,9 +1,13 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-native/no-inline-styles */
 import {useNavigation} from '@react-navigation/native';
-import React from 'react';
-import {FlatList, View} from 'react-native';
+import {AxiosError, AxiosResponse} from 'axios';
+import React, {useEffect} from 'react';
+import {Alert, FlatList, View} from 'react-native';
 import {Card, Paragraph, Text} from 'react-native-paper';
+import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
+import {findEventsOnApi} from '../../services/api/events';
 
 const data = [
   {
@@ -32,6 +36,23 @@ const data = [
 
 export const Home: React.FC = () => {
   const {navigate} = useNavigation();
+
+  const eventsMutation = useMutation(findEventsOnApi, {
+    onSuccess: handleGetEventsSuccess,
+    onError: handleGetEventsError,
+  });
+
+  function handleGetEventsSuccess(eventsResponse: AxiosResponse) {
+    console.log(eventsResponse.data);
+  }
+
+  function handleGetEventsError(responseError: AxiosError) {
+    Alert.alert('Erro', responseError.response?.data || responseError.message);
+  }
+
+  useEffect(() => {
+    eventsMutation.mutate(1);
+  }, []);
 
   return (
     <View style={{flex: 1}}>
