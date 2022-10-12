@@ -35,7 +35,7 @@ const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
         <Drawer.Item
           label="Compras"
           active={false}
-          onPress={() => {}}
+          onPress={() => props.navigation.navigate('Purchases')}
           icon="shopping"
         />
         <Drawer.Item
@@ -47,13 +47,13 @@ const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
         <Drawer.Item
           label="Vendas"
           active={false}
-          onPress={() => {}}
+          onPress={() => props.navigation.navigate('Sales' as never)}
           icon="cash-multiple"
         />
         <Drawer.Item
           label="Sair"
           active={false}
-          onPress={() => {}}
+          onPress={() => props.navigation.navigate('Start' as never)}
           icon="exit-to-app"
         />
       </Drawer.Section>

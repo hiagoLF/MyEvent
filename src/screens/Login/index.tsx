@@ -31,13 +31,16 @@ export const Login: React.FC = () => {
           <Button
             icon="login-variant"
             mode="contained"
-            onPress={() => console.log('Login')}>
+            onPress={() => navigate('Application' as never)}>
             Login
           </Button>
 
           <View style={{alignItems: 'center', marginTop: 20}}>
             <Text>Não possuiu conta?</Text>
-            <Button mode="text" onPress={() => navigate('Register' as never)}>
+            <Button
+              compact
+              mode="text"
+              onPress={() => navigate('Register' as never)}>
               Registrar
             </Button>
           </View>

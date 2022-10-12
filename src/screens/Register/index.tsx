@@ -38,7 +38,10 @@ export const Register: React.FC = () => {
 
           <View style={{alignItems: 'center', marginTop: 20}}>
             <Text>Já tem uma conta?</Text>
-            <Button mode="text" onPress={() => navigate('Login' as never)}>
+            <Button
+              compact
+              mode="text"
+              onPress={() => navigate('Login' as never)}>
               Faça Login
             </Button>
           </View>

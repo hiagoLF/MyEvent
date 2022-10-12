@@ -1,4 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {FlatList, View} from 'react-native';
 import {Card, Paragraph, Text} from 'react-native-paper';
@@ -30,6 +31,8 @@ const data = [
 ];
 
 export const Home: React.FC = () => {
+  const {navigate} = useNavigation();
+
   return (
     <View style={{flex: 1}}>
       <AppHeader title="Home" />
@@ -39,7 +42,11 @@ export const Home: React.FC = () => {
         keyExtractor={item => item.id}
         renderItem={({item}) => (
           <View style={{padding: 5}}>
-            <Card elevation={5}>
+            <Card
+              elevation={5}
+              onPress={() =>
+                navigate('Event' as never, {id: item.id} as never)
+              }>
               <Card.Cover source={{uri: item.imageUrl}} />
               <Card.Title title={item.name} />
               <Card.Content>
