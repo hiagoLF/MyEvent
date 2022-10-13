@@ -3,7 +3,7 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {AxiosError, AxiosResponse} from 'axios';
 import React, {useEffect} from 'react';
-import {RefreshControl, View} from 'react-native';
+import {Alert, View} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {
   ActivityIndicator,
@@ -15,8 +15,7 @@ import {
 } from 'react-native-paper';
 import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
-import {getEventOnApi} from '../../services/api/events';
-import {AppEvent} from '../Home';
+import {getEventOnApi, reserveProductFromApi} from '../../services/api/events';
 
 interface RouteParams {
   id?: string;
@@ -43,6 +42,33 @@ const Event: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [params.id]);
+
+  const bookProductMutation = useMutation(reserveProductFromApi, {
+    onSuccess: handleReserveSuccess,
+    onError: handleReserveError,
+  });
+
+  function handlePurchaseButtonClick() {
+    bookProductMutation.mutate(params.id as string);
+  }
+
+  function handleReserveError(error: AxiosError) {
+    console.log(error.request.requestBody);
+
+    Alert.alert('Erro', error.response?.data?.message || error.message);
+  }
+
+  function handleReserveSuccess(reserve: AxiosResponse<{id: string}>) {
+    navigate(
+      'PurchaseData' as never,
+      {
+        reservationId: reserve.data.id,
+        id: getEventMutation.data?.data.event.id,
+        name: getEventMutation.data?.data.event.name,
+        valor: getEventMutation.data?.data.event.valor,
+      } as never,
+    );
+  }
 
   if (getEventMutation.isLoading) {
     return (
@@ -75,18 +101,7 @@ const Event: React.FC = () => {
             </Text>
           </Card.Content>
         </Card>
-        <Button
-          mode="contained"
-          onPress={() =>
-            navigate(
-              'PurchaseData' as never,
-              {
-                id: getEventMutation.data?.data.event.id,
-                name: getEventMutation.data?.data.event.name,
-                valor: getEventMutation.data?.data.event.valor,
-              } as never,
-            )
-          }>
+        <Button mode="contained" onPress={handlePurchaseButtonClick}>
           Comprar
         </Button>
       </ScrollView>

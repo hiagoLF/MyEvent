@@ -27,6 +27,21 @@ import {faker} from '@faker-js/faker';
 //   imageUrl: string;
 // }
 
+// interface Reservation {
+//   id: string;
+//   userId: string;
+//   eventId: string;
+// }
+
+// interface Purchase {
+// phone: string;
+// cep: string;
+// name: string;
+// adress: string;
+// city: string;
+// state: string;
+// }
+
 export function startServer() {
   if (window.server) {
     server.shutdown();
@@ -37,6 +52,8 @@ export function startServer() {
       user: Model.extend({}),
       token: Model.extend({}),
       event: Model.extend({}),
+      reservation: Model.extend({}),
+      purchase: Model.extend({}),
     },
     factories: {
       event: Factory.extend({
@@ -72,6 +89,11 @@ export function startServer() {
         token: 'ljlglksjgdgdfgd9989323',
       });
       server.createList('event', 20);
+      server.create('reservation', {
+        id: 1,
+        userId: 2,
+        eventId: 1,
+      });
     },
     routes() {
       this.namespace = '/api';
@@ -120,12 +142,12 @@ export function startServer() {
       });
 
       this.get('/events', (schema, req) => {
-        // const token = req.requestHeaders['Authorization'];
-        // const stractedToken = token.split(' ')[1];
-        // const tokenFound = schema.tokens.findBy({token: stractedToken});
-        // if (!tokenFound) {
-        //   return new Response(403, {}, {message: 'Token Inválido'});
-        // }
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
 
         const page = req.queryParams?.page;
 
@@ -148,20 +170,76 @@ export function startServer() {
       });
 
       this.get('/event', (schema, req) => {
-        // const token = req.requestHeaders['Authorization'];
-        // const stractedToken = token.split(' ')[1];
-        // const tokenFound = schema.tokens.findBy({token: stractedToken});
-        // if (!tokenFound) {
-        //   return new Response(403, {}, {message: 'Token Inválido'});
-        // }
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
 
         const id = req.queryParams?.id;
 
         const event = schema.events.findBy({id});
 
-        console.log('Event >>> ', event);
-
         return {event};
+      });
+
+      this.post('/event/reservation', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const eventId = req.requestBody?.id;
+
+        const reservationFound = schema.reservations.findBy({
+          eventId,
+          userId: tokenFound.userId,
+        });
+
+        if (reservationFound) {
+          console.log('Reserva já existe');
+          return {id: reservationFound.id};
+        }
+
+        const createdReservation = schema.reservations.create({
+          userId: tokenFound.userId,
+          eventId,
+        });
+
+        return {id: createdReservation.id};
+      });
+
+      this.post('/event/reservation/finalize', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const body = JSON.parse(req.requestBody);
+
+        const reservationFound = schema.reservations.find(body.reservationId);
+
+        const {phone, cep, name, adress, city, state} = body.purchaseValues;
+
+        const created = schema.purchases.create({
+          phone,
+          cep,
+          name,
+          adress,
+          city,
+          state,
+        });
+
+        console.log('Criado >>> ', created);
+
+        reservationFound.destroy();
+
+        return {message: 'OK'};
       });
     },
   });

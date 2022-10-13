@@ -17,3 +17,17 @@ export async function getEventOnApi(eventId: string) {
     headers: {Authorization: `Bearer ${token}`},
   });
 }
+
+export async function reserveProductFromApi(productId: string) {
+  const token = await getTokenFromStorage();
+
+  return api.post<{id: string}>(
+    '/event/reservation',
+    {
+      id: productId,
+    },
+    {
+      headers: {Authorization: `Bearer ${token}`},
+    },
+  );
+}
