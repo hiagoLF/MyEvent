@@ -1,44 +1,42 @@
+/* eslint-disable no-undef */
 import {createServer, Factory, Model, Response} from 'miragejs';
 import {generateRandomString} from './randomString';
 import {faker} from '@faker-js/faker';
 
-interface User {
-  id: string;
-  login: string;
-  name: string;
-  password: string;
-}
+// interface User {
+//   id: string;
+//   login: string;
+//   name: string;
+//   password: string;
+// }
 
-interface Models {
-  users: User;
-}
+// interface Models {
+//   users: User;
+// }
 
-interface Token {
-  userId: string;
-  token: string;
-}
+// interface Token {
+//   userId: string;
+//   token: string;
+// }
 
-interface Event {
-  id: string;
-  name: string;
-  description: string;
-  valor: number;
-  imageUrl: string;
-}
+// interface Event {
+//   id: string;
+//   name: string;
+//   description: string;
+//   valor: number;
+//   imageUrl: string;
+// }
 
 export function startServer() {
-  // @ts-ignore
   if (window.server) {
-    // @ts-ignore
     server.shutdown();
   }
 
-  // @ts-ignore
-  window.server = createServer<Models>({
+  window.server = createServer({
     models: {
-      user: Model.extend<Partial<User>>({}),
-      token: Model.extend<Partial<Token>>({}),
-      event: Model.extend<Partial<Event>>({}),
+      user: Model.extend({}),
+      token: Model.extend({}),
+      event: Model.extend({}),
     },
     factories: {
       event: Factory.extend({
@@ -58,10 +56,20 @@ export function startServer() {
     },
     seeds(server) {
       server.create('user', {
-        // @ts-ignore
+        id: 1,
         login: 'hiago',
         name: 'Hiago Leão Ferreira',
         password: '123456',
+      });
+      server.create('user', {
+        id: 2,
+        login: 'logado',
+        name: 'Loago Ferreira',
+        password: '123456',
+      });
+      server.create('token', {
+        userId: 2,
+        token: 'ljlglksjgdgdfgd9989323',
       });
       server.createList('event', 20);
     },
@@ -72,7 +80,6 @@ export function startServer() {
       this.post('/users', (schema, req) => {
         const data = JSON.parse(req.requestBody);
 
-        // @ts-ignore
         const found = schema.users.findBy({login: data.login});
 
         if (found) {
@@ -87,8 +94,9 @@ export function startServer() {
       this.post('/login', (schema, req) => {
         const data = JSON.parse(req.requestBody);
 
-        // @ts-ignore
         const found = schema.users.findBy({login: data.login});
+
+        console.log('Usuário logando >>> ', found);
 
         if (!found) {
           return new Response(400, {}, {message: 'Usuário não encontrado'});
@@ -98,28 +106,29 @@ export function startServer() {
           return new Response(400, {}, {message: 'Senha incorreta'});
         }
 
+        const tokenGenerated =
+          found.id === '2'
+            ? 'ljlglksjgdgdfgd9989323'
+            : generateRandomString(50);
+
         const tokenCreated = schema.create('token', {
-          // @ts-ignore
           userId: found.id,
-          token: generateRandomString(50),
+          token: tokenGenerated,
         });
 
-        // @ts-ignore
         return {token: tokenCreated.token, user: {name: found.name}};
       });
 
       this.get('/events', (schema, req) => {
         // const token = req.requestHeaders['Authorization'];
         // const stractedToken = token.split(' ')[1];
-        // // @ts-ignore
         // const tokenFound = schema.tokens.findBy({token: stractedToken});
         // if (!tokenFound) {
         //   return new Response(403, {}, {message: 'Token Inválido'});
         // }
 
-        const page = req.queryParams?.page as number;
+        const page = req.queryParams?.page;
 
-        // @ts-ignore
         const found = schema.events.all().slice((page - 1) * 5, page * 5);
 
         return {data: found.models};
@@ -128,7 +137,7 @@ export function startServer() {
       this.get('/valid_token', (schema, req) => {
         const token = req.requestHeaders['Authorization'];
         const stractedToken = token.split(' ')[1];
-        // @ts-ignore
+
         const tokenFound = schema.tokens.findBy({token: stractedToken});
 
         if (tokenFound) {
@@ -141,7 +150,6 @@ export function startServer() {
       this.get('/event', (schema, req) => {
         // const token = req.requestHeaders['Authorization'];
         // const stractedToken = token.split(' ')[1];
-        // // @ts-ignore
         // const tokenFound = schema.tokens.findBy({token: stractedToken});
         // if (!tokenFound) {
         //   return new Response(403, {}, {message: 'Token Inválido'});
@@ -149,7 +157,6 @@ export function startServer() {
 
         const id = req.queryParams?.id;
 
-        // @ts-ignore
         const event = schema.events.findBy({id});
 
         console.log('Event >>> ', event);

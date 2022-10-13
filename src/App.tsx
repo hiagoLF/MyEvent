@@ -18,7 +18,7 @@ const App = () => {
 
   async function displayScreen() {
     startServer();
-    await new Promise(res => setTimeout(() => res(true), 500));
+    await new Promise(res => setTimeout(() => res(true), 1000));
     setDisplay(true);
   }
 
