@@ -1,5 +1,12 @@
 /* eslint-disable no-undef */
-import {createServer, Factory, Model, Response} from 'miragejs';
+import {
+  belongsTo,
+  createServer,
+  Factory,
+  Model,
+  Response,
+  RestSerializer,
+} from 'miragejs';
 import {generateRandomString} from './randomString';
 import {faker} from '@faker-js/faker';
 
@@ -51,9 +58,21 @@ export function startServer() {
     models: {
       user: Model.extend({}),
       token: Model.extend({}),
-      event: Model.extend({}),
-      reservation: Model.extend({}),
-      purchase: Model.extend({}),
+      event: Model.extend(),
+      reservation: Model.extend({
+        event: belongsTo(),
+        user: belongsTo(),
+      }),
+      purchase: Model.extend({
+        event: belongsTo(),
+        user: belongsTo(),
+      }),
+    },
+    serializers: {
+      purchase: RestSerializer.extend({
+        include: ['event'],
+        embed: true,
+      }),
     },
     factories: {
       event: Factory.extend({
@@ -78,7 +97,7 @@ export function startServer() {
         name: 'Hiago Leão Ferreira',
         password: '123456',
       });
-      server.create('user', {
+      const hiagoLogado = server.create('user', {
         id: 2,
         login: 'logado',
         name: 'Loago Ferreira',
@@ -88,11 +107,22 @@ export function startServer() {
         userId: 2,
         token: 'ljlglksjgdgdfgd9989323',
       });
-      server.createList('event', 20);
+      const events = server.createList('event', 20);
       server.create('reservation', {
         id: 1,
         userId: 2,
         eventId: 1,
+      });
+      server.create('purchase', {
+        event: events[0],
+        user: hiagoLogado,
+        phone: '(77) 98876-3434',
+        cep: '34234-333',
+        name: 'Hiago Logado no App',
+        adress: 'Rua do Galo',
+        city: 'Smallvile',
+        state: 'Piauí',
+        qr: generateRandomString(20),
       });
     },
     routes() {
@@ -117,8 +147,6 @@ export function startServer() {
         const data = JSON.parse(req.requestBody);
 
         const found = schema.users.findBy({login: data.login});
-
-        console.log('Usuário logando >>> ', found);
 
         if (!found) {
           return new Response(400, {}, {message: 'Usuário não encontrado'});
@@ -151,7 +179,14 @@ export function startServer() {
 
         const page = req.queryParams?.page;
 
-        const found = schema.events.all().slice((page - 1) * 5, page * 5);
+        const found = schema.events
+          .all()
+          .sort((a, b) => {
+            return Number(b.id) > Number(a.id) ? 1 : 0;
+          })
+          .slice((page - 1) * 5, page * 5);
+
+        console.log(found.models.forEach(item => console.log(item.id)));
 
         return {data: found.models};
       });
@@ -191,22 +226,24 @@ export function startServer() {
         if (!tokenFound) {
           return new Response(403, {}, {message: 'Token Inválido'});
         }
+        const userFound = schema.users.find(tokenFound.userId);
 
-        const eventId = req.requestBody?.id;
+        const body = JSON.parse(req.requestBody);
+
+        const eventFound = schema.events.find(body.id);
 
         const reservationFound = schema.reservations.findBy({
-          eventId,
+          eventId: body.id,
           userId: tokenFound.userId,
         });
 
         if (reservationFound) {
-          console.log('Reserva já existe');
           return {id: reservationFound.id};
         }
 
         const createdReservation = schema.reservations.create({
-          userId: tokenFound.userId,
-          eventId,
+          user: userFound,
+          event: eventFound,
         });
 
         return {id: createdReservation.id};
@@ -224,22 +261,83 @@ export function startServer() {
 
         const reservationFound = schema.reservations.find(body.reservationId);
 
+        console.log('Reservation >>> ', reservationFound);
+        console.log(schema.reservations.all().models);
+
+        const eventFound = schema.events.find(reservationFound.eventId);
+        const userFound = schema.users.find(reservationFound.userId);
+
         const {phone, cep, name, adress, city, state} = body.purchaseValues;
 
-        const created = schema.purchases.create({
+        schema.purchases.create({
+          event: eventFound,
+          user: userFound,
           phone,
           cep,
           name,
           adress,
           city,
           state,
+          qr: generateRandomString(20),
         });
-
-        console.log('Criado >>> ', created);
 
         reservationFound.destroy();
 
         return {message: 'OK'};
+      });
+
+      this.get('/purchases', (schema, req) => {
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const page = req.queryParams?.page;
+
+        const user = schema.users.find(tokenFound.userId);
+
+        const found = schema.purchases
+          .where({userId: user.id})
+          .sort((a, b) => {
+            return Number(b.id) > Number(a.id) ? 1 : 0;
+          })
+          .slice((page - 1) * 5, page * 5);
+
+        const formated = found.models.map(item => {
+          return {
+            ...item.attrs,
+            event: item.event,
+          };
+        });
+
+        console.log(formated);
+
+        return {purchases: formated};
+      });
+
+      this.get('/purchase', (schema, req) => {
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const id = req.queryParams?.id;
+
+        const purchaseFound = schema.purchases.find(id);
+
+        const purchase = {
+          qr: purchaseFound.qr,
+          imageUrl: purchaseFound.event.imageUrl,
+          name: purchaseFound.event.name,
+          value: purchaseFound.event.valor,
+          description: purchaseFound.event.description,
+        };
+
+        return {purchase};
       });
     },
   });

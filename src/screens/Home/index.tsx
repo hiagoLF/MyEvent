@@ -4,7 +4,8 @@ import {useNavigation} from '@react-navigation/native';
 import {AxiosError, AxiosResponse} from 'axios';
 import React, {useEffect, useState} from 'react';
 import {Alert, FlatList, View} from 'react-native';
-import {ActivityIndicator, Card, Paragraph, Text} from 'react-native-paper';
+import {RefreshControl} from 'react-native-gesture-handler';
+import {Card, Text} from 'react-native-paper';
 import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
 import {findEventsOnApi} from '../../services/api/events';
@@ -12,7 +13,7 @@ import {findEventsOnApi} from '../../services/api/events';
 export interface AppEvent {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   valor: number;
   imageUrl: string;
 }
@@ -59,6 +60,12 @@ export const Home: React.FC = () => {
     }
   }
 
+  function handleRefreshEvents() {
+    setEventsList([]);
+    setCurrentPage(1);
+    eventsMutation.mutate(1);
+  }
+
   return (
     <View style={{flex: 1}}>
       <AppHeader title="Home" />
@@ -68,8 +75,11 @@ export const Home: React.FC = () => {
         keyExtractor={item => item.id}
         onEndReachedThreshold={1}
         onEndReached={handleOnEndReached}
-        ListFooterComponent={
-          eventsMutation.isLoading ? <ActivityIndicator /> : null
+        refreshControl={
+          <RefreshControl
+            refreshing={eventsMutation.isLoading}
+            onRefresh={handleRefreshEvents}
+          />
         }
         renderItem={({item}) => (
           <View style={{padding: 5}}>
@@ -79,9 +89,8 @@ export const Home: React.FC = () => {
                 navigate('Event' as never, {id: item.id} as never)
               }>
               <Card.Cover source={{uri: item.imageUrl}} />
-              <Card.Title titleVariant="titleMedium" title={item.name} />
+              <Card.Title titleVariant="titleLarge" title={item.name} />
               <Card.Content>
-                <Paragraph>{item.description}</Paragraph>
                 <Text variant="labelLarge">
                   {new Intl.NumberFormat('pt-BR', {
                     style: 'currency',

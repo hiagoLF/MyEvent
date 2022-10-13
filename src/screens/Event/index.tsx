@@ -53,7 +53,9 @@ const Event: React.FC = () => {
   }
 
   function handleReserveError(error: AxiosError) {
-    console.log(error.request.requestBody);
+    console.log('é aqui que dá erro?');
+
+    console.log('Essa é a mensagem >>> ', error.response?.data.message);
 
     Alert.alert('Erro', error.response?.data?.message || error.message);
   }
