@@ -1,15 +1,17 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-native/no-inline-styles */
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {AxiosError, AxiosResponse} from 'axios';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {Alert, View} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
-import {Button, TextInput} from 'react-native-paper';
+import {ActivityIndicator, Button, TextInput} from 'react-native-paper';
 import {Card, Text} from 'react-native-paper';
-import {useMutation} from 'react-query';
+import {useMutation, useQuery} from 'react-query';
 import {useAppContext} from '../../context/AppContext';
 import api from '../../services/api';
+import {verifyTokenRequest} from '../../services/api/token';
 
 interface Message {
   title: string;
@@ -37,6 +39,7 @@ interface LoginResponse {
 }
 
 export const Login: React.FC = () => {
+  const [loginVisible, setLoginVisible] = useState(false);
   const {navigate} = useNavigation();
   const {params} = useRoute<ProfileScreenRouteProp>();
   const {defineAuth} = useAppContext();
@@ -49,7 +52,7 @@ export const Login: React.FC = () => {
   } = useForm();
 
   async function loginRequest(registerProps: LoginProps) {
-    return await api.post('/api/login', {...registerProps});
+    return await api.post('/login', {...registerProps});
   }
 
   const loginMutation = useMutation(loginRequest, {
@@ -75,16 +78,15 @@ export const Login: React.FC = () => {
       ]);
     });
 
+    goToApplication();
+  }
+
+  function goToApplication() {
     reset({
       routes: [
         {
           name: 'Application' as never,
-          params: {
-            message: {
-              title: 'Sucesso!',
-              text: 'Login realizado com sucesso. Aproveite!',
-            },
-          },
+          params: {},
         },
       ],
     });
@@ -99,6 +101,33 @@ export const Login: React.FC = () => {
       Alert.alert(params.message.title, params.message.text);
     }
   }, [params]);
+
+  const verifyTokenQuery = useQuery('verify-token', verifyTokenRequest, {
+    enabled: false,
+    onSuccess: handleVerifyTokenSuccess,
+    onError: handleVerifyTokenError,
+    retry: false,
+  });
+
+  function handleVerifyTokenSuccess() {
+    goToApplication();
+  }
+
+  function handleVerifyTokenError() {
+    setLoginVisible(true);
+  }
+
+  useEffect(() => {
+    verifyTokenQuery.refetch();
+  }, []);
+
+  if (!loginVisible) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center'}}>
+        <ActivityIndicator animating={true} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView

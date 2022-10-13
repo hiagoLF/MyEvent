@@ -32,7 +32,7 @@ export const Register: React.FC = () => {
   console.log(currentPassword);
 
   async function registerRequest(registerProps: RegisterProps) {
-    return await api.post('/api/user', {...registerProps});
+    return await api.post('/user', {...registerProps});
   }
 
   const registerMutation = useMutation(registerRequest, {

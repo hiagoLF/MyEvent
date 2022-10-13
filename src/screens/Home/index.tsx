@@ -2,65 +2,75 @@
 /* eslint-disable react-native/no-inline-styles */
 import {useNavigation} from '@react-navigation/native';
 import {AxiosError, AxiosResponse} from 'axios';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Alert, FlatList, View} from 'react-native';
-import {Card, Paragraph, Text} from 'react-native-paper';
+import {ActivityIndicator, Card, Paragraph, Text} from 'react-native-paper';
 import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
 import {findEventsOnApi} from '../../services/api/events';
 
-const data = [
-  {
-    id: '342343',
-    name: 'Aniversário de Dacueba',
-    description: 'Vai ser top e você vai amar',
-    valor: 12.9,
-    imageUrl: 'https://picsum.photos/700',
-  },
-  {
-    id: '23423423',
-    name: 'Simpósio do Gamado',
-    description: 'Tudo que você precisa em um só lugar vai ser aqui',
-    valor: 20.95,
-    imageUrl: 'https://picsum.photos/700',
-  },
-  {
-    id: '4234234',
-    name: 'Campeonato de Biriba',
-    description:
-      'A vida é curta e participar de um campeonato de birita é fundamental',
-    valor: 30,
-    imageUrl: 'https://picsum.photos/700',
-  },
-];
+export interface AppEvent {
+  id: string;
+  name: string;
+  description: string;
+  valor: number;
+  imageUrl: string;
+}
+
+interface EventsResponse {
+  data: AppEvent[];
+}
 
 export const Home: React.FC = () => {
   const {navigate} = useNavigation();
+  const [eventsList, setEventsList] = useState<AppEvent[]>([]);
+  const [currentPage, setCurrentPage] = useState<undefined | number>(1);
 
   const eventsMutation = useMutation(findEventsOnApi, {
     onSuccess: handleGetEventsSuccess,
     onError: handleGetEventsError,
   });
 
-  function handleGetEventsSuccess(eventsResponse: AxiosResponse) {
-    console.log(eventsResponse.data);
+  function handleGetEventsSuccess(
+    eventsResponse: AxiosResponse<EventsResponse>,
+  ) {
+    if (eventsResponse.data.data.length === 0) {
+      setCurrentPage(undefined);
+    } else {
+      setCurrentPage(prev => (prev as number) + 1);
+      setEventsList(prev => [...prev, ...eventsResponse.data.data]);
+    }
   }
 
   function handleGetEventsError(responseError: AxiosError) {
-    Alert.alert('Erro', responseError.response?.data || responseError.message);
+    Alert.alert(
+      'Erro',
+      responseError.response?.data.message || responseError.message,
+    );
   }
 
   useEffect(() => {
-    eventsMutation.mutate(1);
+    eventsMutation.mutate(currentPage as number);
   }, []);
+
+  function handleOnEndReached() {
+    if (!eventsMutation.isLoading && currentPage) {
+      eventsMutation.mutate(currentPage);
+    }
+  }
 
   return (
     <View style={{flex: 1}}>
       <AppHeader title="Home" />
 
       <FlatList
-        data={data}
+        data={eventsList}
         keyExtractor={item => item.id}
+        onEndReachedThreshold={1}
+        onEndReached={handleOnEndReached}
+        ListFooterComponent={
+          eventsMutation.isLoading ? <ActivityIndicator /> : null
+        }
         renderItem={({item}) => (
           <View style={{padding: 5}}>
             <Card
@@ -69,10 +79,15 @@ export const Home: React.FC = () => {
                 navigate('Event' as never, {id: item.id} as never)
               }>
               <Card.Cover source={{uri: item.imageUrl}} />
-              <Card.Title title={item.name} />
+              <Card.Title titleVariant="titleMedium" title={item.name} />
               <Card.Content>
                 <Paragraph>{item.description}</Paragraph>
-                <Text variant="labelLarge">R$ {item.valor}</Text>
+                <Text variant="labelLarge">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(item.valor)}
+                </Text>
               </Card.Content>
             </Card>
           </View>

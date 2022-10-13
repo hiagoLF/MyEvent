@@ -1,13 +1,25 @@
 /* eslint-disable react-native/no-inline-styles */
-import {useNavigation} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React from 'react';
 import {View, ScrollView} from 'react-native';
 import {Button, Card, Text, TextInput, Title} from 'react-native-paper';
 import {AppHeader} from '../../components/AppHeader';
 
+interface RouteParams {
+  id?: string;
+  name?: string;
+  valor?: number;
+}
+
+type RootStackParamList = {
+  Profile: RouteParams;
+};
+
+type ProfileScreenRouteProp = RouteProp<RootStackParamList, 'Profile'>;
+
 export const PurchaseData: React.FC = () => {
-  const {goBack} = useNavigation();
-  const {navigate} = useNavigation();
+  const {goBack, navigate} = useNavigation();
+  const {params} = useRoute<ProfileScreenRouteProp>();
 
   return (
     <View style={{flex: 1}}>
@@ -18,13 +30,18 @@ export const PurchaseData: React.FC = () => {
       />
 
       <ScrollView
-        keyboardShouldPersistTaps={true}
+        keyboardShouldPersistTaps="always"
         contentContainerStyle={{padding: 10}}>
         <Card style={{marginBottom: 10}}>
           <Card.Title title="Compra" />
           <Card.Content>
-            <Title>Evento UFBA</Title>
-            <Text variant="titleMedium">R$ 200,00</Text>
+            <Title>{params.name}</Title>
+            <Text variant="titleMedium">
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(params.valor as number)}
+            </Text>
           </Card.Content>
         </Card>
         <TextInput label="Nome" style={{marginBottom: 10}} />

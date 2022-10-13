@@ -1,15 +1,56 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-native/no-inline-styles */
-import {useNavigation} from '@react-navigation/native';
-import React from 'react';
-import {View} from 'react-native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {AxiosError, AxiosResponse} from 'axios';
+import React, {useEffect} from 'react';
+import {RefreshControl, View} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
-import {Button, Card, Paragraph, Text, Title} from 'react-native-paper';
+import {
+  ActivityIndicator,
+  Button,
+  Card,
+  Paragraph,
+  Text,
+  Title,
+} from 'react-native-paper';
+import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
+import {getEventOnApi} from '../../services/api/events';
+import {AppEvent} from '../Home';
 
-// import { Container } from './styles';
+interface RouteParams {
+  id?: string;
+}
+
+type RootStackParamList = {
+  Profile: RouteParams;
+};
+
+type ProfileScreenRouteProp = RouteProp<RootStackParamList, 'Profile'>;
 
 const Event: React.FC = () => {
   const {goBack, navigate} = useNavigation();
+  const {params} = useRoute<ProfileScreenRouteProp>();
+
+  const getEventMutation = useMutation(getEventOnApi);
+
+  function loadData() {
+    if (params.id || getEventMutation.isLoading) {
+      getEventMutation.mutate(params.id as string);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, [params.id]);
+
+  if (getEventMutation.isLoading) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center'}}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return (
     <View style={{flex: 1}}>
@@ -17,24 +58,34 @@ const Event: React.FC = () => {
 
       <ScrollView contentContainerStyle={{padding: 10}}>
         <Card style={{marginBottom: 20}}>
-          <Card.Cover source={{uri: 'https://picsum.photos/700'}} />
+          <Card.Cover
+            source={{uri: getEventMutation.data?.data.event.imageUrl}}
+          />
 
           <Card.Content>
-            <Title>Festa da Ururuca</Title>
+            <Title>{getEventMutation.data?.data.event.name}</Title>
             <Paragraph>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla
-              rhoncus, massa at interdum aliquet, felis turpis pellentesque
-              lorem, ut eleifend odio diam vitae ex. Sed eleifend neque purus,
+              {getEventMutation.data?.data.event.description}
             </Paragraph>
             <Text style={{marginTop: 10}} variant="titleLarge">
-              R$ 150,00
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(getEventMutation.data?.data.event.valor as number)}
             </Text>
           </Card.Content>
         </Card>
         <Button
           mode="contained"
           onPress={() =>
-            navigate('PurchaseData' as never, {id: 'sdfadffasd'} as never)
+            navigate(
+              'PurchaseData' as never,
+              {
+                id: getEventMutation.data?.data.event.id,
+                name: getEventMutation.data?.data.event.name,
+                valor: getEventMutation.data?.data.event.valor,
+              } as never,
+            )
           }>
           Comprar
         </Button>
