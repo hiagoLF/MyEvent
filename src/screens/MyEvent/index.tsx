@@ -8,7 +8,10 @@ import {RefreshControl, ScrollView} from 'react-native-gesture-handler';
 import {Button, Card, Paragraph, Text, Title} from 'react-native-paper';
 import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
-import {closeEventRequest} from '../../services/api/eventActions';
+import {
+  closeEventRequest,
+  openEventRequest,
+} from '../../services/api/eventActions';
 import {findMyEventOnApi} from '../../services/api/events';
 
 interface RouteParams {
@@ -83,15 +86,28 @@ export const MyEvent: React.FC = () => {
     );
   }
 
-  console.log(params.id);
+  function handleOpenButtonPRess() {
+    Alert.alert(
+      'Abrir evento?',
+      'Tem certeza que deseja abrir as vendas deste evento?',
+      [
+        {text: 'Cancelar'},
+        {
+          text: 'Continuar',
+          style: 'destructive',
+          onPress: () => openEventMutation.mutate(params.id as string),
+        },
+      ],
+    );
+  }
 
   const closeEventMutation = useMutation(closeEventRequest, {
-    onSuccess: handleCloseEventSuccess,
+    onSuccess: findMyEvent,
   });
 
-  function handleCloseEventSuccess() {
-    myEventMutation.mutate(params.id as string);
-  }
+  const openEventMutation = useMutation(openEventRequest, {
+    onSuccess: findMyEvent,
+  });
 
   return (
     <View style={{flex: 1}}>
@@ -155,13 +171,17 @@ export const MyEvent: React.FC = () => {
               </Button>
             )}
 
-            <Button
-              style={{marginBottom: 10}}
-              icon="lock-open"
-              mode="contained"
-              onPress={() => {}}>
-              ABRIR VENDA
-            </Button>
+            {myEventData?.closed && (
+              <Button
+                style={{marginBottom: 10}}
+                icon="lock-open"
+                mode="contained"
+                loading={openEventMutation.isLoading}
+                disabled={openEventMutation.isLoading}
+                onPress={handleOpenButtonPRess}>
+                ABRIR VENDA
+              </Button>
+            )}
 
             <Button
               style={{marginBottom: 10}}

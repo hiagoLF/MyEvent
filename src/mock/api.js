@@ -430,6 +430,25 @@ export function startServer() {
 
         return {message: 'OK'};
       });
+
+      this.put('/event/open', (schema, req) => {
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const id = req.queryParams?.id;
+
+        const found = schema.events.find(id);
+
+        found.update({
+          closed: false,
+        });
+
+        return {message: 'OK'};
+      });
     },
   });
 }
