@@ -3,6 +3,7 @@ import {
   belongsTo,
   createServer,
   Factory,
+  hasMany,
   Model,
   Response,
   RestSerializer,
@@ -58,7 +59,10 @@ export function startServer() {
     models: {
       user: Model.extend({}),
       token: Model.extend({}),
-      event: Model.extend(),
+      event: Model.extend({
+        purchase: hasMany(),
+        user: belongsTo(),
+      }),
       reservation: Model.extend({
         event: belongsTo(),
         user: belongsTo(),
@@ -68,14 +72,9 @@ export function startServer() {
         user: belongsTo(),
       }),
     },
-    serializers: {
-      purchase: RestSerializer.extend({
-        include: ['event'],
-        embed: true,
-      }),
-    },
     factories: {
       event: Factory.extend({
+        userId: 2,
         name() {
           return faker.lorem.words(3);
         },
@@ -87,6 +86,26 @@ export function startServer() {
         },
         imageUrl() {
           return faker.image.image();
+        },
+        sell() {
+          return Math.round(Math.random() * (50 - 1) + 1);
+        },
+        rest() {
+          return Math.round(Math.random() * (15 - 0) + 0);
+        },
+        closed() {
+          return faker.datatype.boolean();
+        },
+      }),
+      user: Factory.extend({
+        login() {
+          return faker.word(6);
+        },
+        name() {
+          return faker.name.fullName();
+        },
+        password() {
+          return faker.word(6);
         },
       }),
     },
@@ -338,6 +357,78 @@ export function startServer() {
         };
 
         return {purchase};
+      });
+
+      this.get('/my_events', (schema, req) => {
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const page = req.queryParams?.page;
+
+        const found = schema.events
+          .where({userId: tokenFound.userId})
+          .sort((a, b) => {
+            return Number(b.id) > Number(a.id) ? 1 : 0;
+          })
+          .slice((page - 1) * 5, page * 5);
+
+        const formated = found.models.map(item => ({
+          id: item.id,
+          title: item.name,
+          sell: item.sell,
+        }));
+
+        console.log(formated);
+
+        return {myEvents: formated};
+      });
+
+      this.get('/my_event', (schema, req) => {
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const id = req.queryParams?.id;
+
+        const found = schema.events.find(id);
+
+        const myEvent = {
+          name: found.name,
+          description: found.description,
+          valor: found.valor,
+          sell: found.sell,
+          gain: found.sell * found.valor,
+          rest: found.rest,
+          closed: found.closed,
+        };
+
+        return {myEvent};
+      });
+
+      this.put('/event/close', (schema, req) => {
+        const token = req.requestHeaders['Authorization'];
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const id = req.queryParams?.id;
+
+        const found = schema.events.find(id);
+
+        found.update({
+          closed: true,
+        });
+
+        return {message: 'OK'};
       });
     },
   });

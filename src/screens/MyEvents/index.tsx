@@ -1,28 +1,71 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-native/no-inline-styles */
 import {useNavigation} from '@react-navigation/native';
-import React from 'react';
-import {View} from 'react-native';
-import {FlatList} from 'react-native-gesture-handler';
+import {AxiosError, AxiosResponse} from 'axios';
+import React, {useEffect, useState} from 'react';
+import {Alert, View} from 'react-native';
+import {FlatList, RefreshControl} from 'react-native-gesture-handler';
 import {FAB} from 'react-native-paper';
+import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
 import LittleCard from '../../components/LittleCard';
+import {findMyEventsOnApi} from '../../services/api/events';
 
-const data = [
-  {id: 'erwerwe', title: 'Evento Mascote', sell: 12},
-  {id: '54534r', title: 'Simpósio UFBA saúde', sell: 16},
-  {id: '234', title: 'Mandacarú Saúde', sell: 14},
-  {id: '34234', title: 'Faisão das Viage', sell: 10},
-  {id: 'eqwe', title: 'Faisão das Viage', sell: 10},
-  {id: 'qweqw', title: 'Faisão das Viage', sell: 10},
-  {id: '342qweqw34', title: 'Faisão das Viage', sell: 10},
-  {id: 'qwe', title: 'Faisão das Viage', sell: 10},
-  {id: 'qweqwe', title: 'Faisão das Viage', sell: 10},
-  {id: 'dfsd', title: 'Faisão das Viage', sell: 10},
-  {id: '432', title: 'Faisão das Viage', sell: 10},
-];
+export interface MyEvent {
+  id: string;
+  title: string;
+  sell: number;
+}
+
+export interface FindMyEventsResponse {
+  myEvents: MyEvent[];
+}
 
 export const MyEvents: React.FC = () => {
   const {navigate, goBack} = useNavigation();
+  const [myEventsList, setMyEventsList] = useState<MyEvent[]>([]);
+  const [currentPage, setCurrentPage] = useState<undefined | number>(1);
+
+  const getEventsMutation = useMutation(findMyEventsOnApi, {
+    onSuccess: handleGetEventsSuccess,
+    onError: handleGetEventsError,
+  });
+
+  function handleGetEventsSuccess(
+    eventsResponse: AxiosResponse<FindMyEventsResponse>,
+  ) {
+    console.log('Recebido >>> ', eventsResponse.data.myEvents);
+
+    if (eventsResponse.data.myEvents.length === 0) {
+      setCurrentPage(undefined);
+    } else {
+      setCurrentPage(prev => (prev as number) + 1);
+      setMyEventsList(prev => [...prev, ...eventsResponse.data.myEvents]);
+    }
+  }
+
+  function handleGetEventsError(responseError: AxiosError) {
+    Alert.alert(
+      'Erro',
+      responseError.response?.data.message || responseError.message,
+    );
+  }
+
+  useEffect(() => {
+    getEventsMutation.mutate(currentPage as number);
+  }, []);
+
+  function handleOnEndReached() {
+    if (!getEventsMutation.isLoading && currentPage) {
+      getEventsMutation.mutate(currentPage);
+    }
+  }
+
+  function handleRefreshEvents() {
+    setMyEventsList([]);
+    setCurrentPage(1);
+    getEventsMutation.mutate(1);
+  }
 
   return (
     <View style={{flex: 1}}>
@@ -47,7 +90,15 @@ export const MyEvents: React.FC = () => {
 
       <FlatList
         style={{padding: 5}}
-        data={data}
+        data={myEventsList}
+        refreshControl={
+          <RefreshControl
+            refreshing={getEventsMutation.isLoading}
+            onRefresh={handleRefreshEvents}
+          />
+        }
+        onEndReached={handleOnEndReached}
+        onEndReachedThreshold={1}
         keyExtractor={({id}) => id}
         renderItem={({item}) => (
           <View style={{marginBottom: 8}}>
