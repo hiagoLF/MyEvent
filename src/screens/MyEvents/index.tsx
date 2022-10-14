@@ -22,7 +22,7 @@ export interface FindMyEventsResponse {
 }
 
 export const MyEvents: React.FC = () => {
-  const {navigate, goBack} = useNavigation();
+  const {navigate} = useNavigation();
   const [myEventsList, setMyEventsList] = useState<MyEvent[]>([]);
   const [currentPage, setCurrentPage] = useState<undefined | number>(1);
 
@@ -34,8 +34,6 @@ export const MyEvents: React.FC = () => {
   function handleGetEventsSuccess(
     eventsResponse: AxiosResponse<FindMyEventsResponse>,
   ) {
-    console.log('Recebido >>> ', eventsResponse.data.myEvents);
-
     if (eventsResponse.data.myEvents.length === 0) {
       setCurrentPage(undefined);
     } else {
@@ -72,7 +70,7 @@ export const MyEvents: React.FC = () => {
       <AppHeader
         title="Meus Eventos"
         backAction
-        onBackActionPress={() => goBack()}
+        onBackActionPress={() => navigate('Home' as never)}
       />
 
       <FAB
@@ -85,7 +83,7 @@ export const MyEvents: React.FC = () => {
           zIndex: 5,
         }}
         variant="tertiary"
-        onPress={() => console.log('Pressed')}
+        onPress={() => navigate('CreateEditEvent' as never)}
       />
 
       <FlatList

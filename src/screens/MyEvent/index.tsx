@@ -32,6 +32,8 @@ interface MyEvent {
   gain: number;
   rest: number;
   closed: boolean;
+  ticketsNumber: number;
+  imageUrl: string;
 }
 
 export interface MyEventResponse {
@@ -39,9 +41,11 @@ export interface MyEventResponse {
 }
 
 export const MyEvent: React.FC = () => {
-  const {goBack} = useNavigation();
   const {params} = useRoute<ProfileScreenRouteProp>();
   const [myEventData, setMyEventData] = useState<undefined | MyEvent>();
+  const {navigate} = useNavigation();
+
+  console.log(myEventData);
 
   const myEventMutation = useMutation(findMyEventOnApi, {
     onError: handleGetMyEventError,
@@ -114,7 +118,9 @@ export const MyEvent: React.FC = () => {
       <AppHeader
         title="Meu Evento"
         backAction
-        onBackActionPress={() => goBack()}
+        onBackActionPress={async () => {
+          navigate('MyEvents' as never);
+        }}
       />
 
       <ScrollView
@@ -128,7 +134,7 @@ export const MyEvent: React.FC = () => {
         {myEventMutation.data && !myEventMutation.isLoading && (
           <>
             <Card style={{marginBottom: 10}}>
-              <Card.Cover source={{uri: 'https://picsum.photos/700'}} />
+              <Card.Cover source={{uri: myEventData?.imageUrl}} />
 
               <Card.Content>
                 <Title>{myEventData?.name}</Title>
@@ -142,7 +148,7 @@ export const MyEvent: React.FC = () => {
                   {new Intl.NumberFormat('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
-                  }).format(myEventData?.valor || 0)}
+                  }).format((myEventData?.valor || 0) / 100)}
                 </Text>
                 <Text>Vendas: {myEventData?.sell}</Text>
                 <Text>
@@ -150,7 +156,7 @@ export const MyEvent: React.FC = () => {
                   {new Intl.NumberFormat('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
-                  }).format(myEventData?.gain || 0)}
+                  }).format((myEventData?.gain || 0) / 100)}
                 </Text>
                 <Text>
                   Resta{(myEventData?.rest || 0) > 1 && 'm'} {myEventData?.rest}{' '}
@@ -187,7 +193,20 @@ export const MyEvent: React.FC = () => {
               style={{marginBottom: 10}}
               icon="application-edit"
               mode="contained"
-              onPress={() => {}}>
+              onPress={() =>
+                navigate(
+                  'CreateEditEvent' as never,
+                  {
+                    type: 'edit',
+                    eventId: params.id,
+                    name: myEventData?.name,
+                    desription: myEventData?.description,
+                    valor: myEventData?.valor,
+                    ticketsNumber: myEventData?.ticketsNumber,
+                    imageUrl: myEventData?.imageUrl,
+                  } as never,
+                )
+              }>
               EDITAR EVENTO
             </Button>
 

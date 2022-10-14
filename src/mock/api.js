@@ -82,7 +82,7 @@ export function startServer() {
           return faker.lorem.paragraph(3);
         },
         valor() {
-          return faker.random.numeric(2);
+          return faker.random.numeric(5);
         },
         imageUrl() {
           return faker.image.image();
@@ -95,6 +95,9 @@ export function startServer() {
         },
         closed() {
           return faker.datatype.boolean();
+        },
+        ticketsNumber() {
+          return Math.round(Math.random() * (100 - 50) + 50);
         },
       }),
       user: Factory.extend({
@@ -189,7 +192,7 @@ export function startServer() {
       });
 
       this.get('/events', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -211,7 +214,7 @@ export function startServer() {
       });
 
       this.get('/valid_token', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
 
         const tokenFound = schema.tokens.findBy({token: stractedToken});
@@ -224,7 +227,7 @@ export function startServer() {
       });
 
       this.get('/event', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -306,7 +309,7 @@ export function startServer() {
       });
 
       this.get('/purchases', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -337,7 +340,7 @@ export function startServer() {
       });
 
       this.get('/purchase', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -360,7 +363,7 @@ export function startServer() {
       });
 
       this.get('/my_events', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -388,7 +391,7 @@ export function startServer() {
       });
 
       this.get('/my_event', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -405,15 +408,20 @@ export function startServer() {
           valor: found.valor,
           sell: found.sell,
           gain: found.sell * found.valor,
-          rest: found.rest,
+          rest:
+            found.sell >= found.ticketsNumber
+              ? 0
+              : found.ticketsNumber - found.sell,
           closed: found.closed,
+          ticketsNumber: found.ticketsNumber,
+          imageUrl: found.imageUrl,
         };
 
         return {myEvent};
       });
 
       this.put('/event/close', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -432,7 +440,7 @@ export function startServer() {
       });
 
       this.put('/event/open', (schema, req) => {
-        const token = req.requestHeaders['Authorization'];
+        const token = req.requestHeaders.Authorization;
         const stractedToken = token.split(' ')[1];
         const tokenFound = schema.tokens.findBy({token: stractedToken});
         if (!tokenFound) {
@@ -448,6 +456,75 @@ export function startServer() {
         });
 
         return {message: 'OK'};
+      });
+
+      this.put('/event', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const id = req.queryParams?.id;
+        const body = JSON.parse(req.requestBody);
+
+        const found = schema.events.find(id);
+
+        found.update({
+          name: body.name,
+          description: body.description,
+          valor: body.valor,
+          ticketsNumber: body.ticketsNumber,
+        });
+
+        return {id: found.id};
+      });
+
+      this.put('/event/image', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const id = req.queryParams?.id;
+        const body = JSON.parse(req.requestBody);
+
+        const newImageUrl = body._parts[0][1].uri;
+
+        const found = schema.events.find(id);
+
+        found.update({
+          imageUrl: newImageUrl,
+        });
+
+        return {message: 'OK', eventId: id};
+      });
+
+      this.post('/event', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const body = JSON.parse(req.requestBody);
+
+        created = schema.events.create({
+          userId: tokenFound.userId,
+          sell: 0,
+          rest: body.ticketsNumber,
+          closed: true,
+          name: body.name,
+          description: body.description,
+          valor: body.valor,
+          ticketsNumber: body.ticketsNumber,
+        });
+
+        return {id: created.id};
       });
     },
   });
