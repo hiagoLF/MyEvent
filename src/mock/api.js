@@ -148,7 +148,8 @@ export function startServer() {
         adress: 'Rua do Galo',
         city: 'Smallvile',
         state: 'Piauí',
-        qr: generateRandomString(20),
+        qr: 'qerqwer32432342erwerwerwetqwt',
+        checked: false,
       });
       server.create('event', {
         user: hiagoLogado,
@@ -307,6 +308,7 @@ export function startServer() {
           city,
           state,
           qr: generateRandomString(20),
+          checked: false,
         });
 
         reservationFound.destroy();
@@ -598,6 +600,48 @@ export function startServer() {
         tokenFound.destroy();
 
         return {message: 'OK'};
+      });
+
+      this.post('/scanner', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const body = JSON.parse(req.requestBody);
+
+        const purchaseFound = schema.purchases.findBy({qr: body.qr});
+
+        if (!purchaseFound) {
+          return new Response(404, {}, {message: 'Ingresso não encontrado'});
+        }
+
+        if (purchaseFound.eventId !== body.eventId) {
+          return new Response(
+            403,
+            {},
+            {message: 'Este ingresso pertence a outro evento'},
+          );
+        }
+
+        if (purchaseFound.checked) {
+          return new Response(
+            403,
+            {},
+            {message: 'Este ingresso Já foi checado'},
+          );
+        }
+
+        purchaseFound.update({
+          checked: true,
+        });
+
+        return {
+          title: 'Válido!',
+          message: `${purchaseFound.name} deu entrada no evento ${purchaseFound.event.name}`,
+        };
       });
     },
   });

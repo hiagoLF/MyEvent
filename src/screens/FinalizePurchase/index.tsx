@@ -58,16 +58,12 @@ export const FinalizePurchase: React.FC = () => {
     );
 
     await new Promise(res =>
-      Alert.alert(
-        'Sucesso',
-        'Você acabou de comprar comprar um ingresso. Obrigado!',
-        [
-          {
-            text: 'Continuar',
-            onPress: () => res(true),
-          },
-        ],
-      ),
+      Alert.alert('Sucesso', 'Você acabou de comprar um ingresso. Obrigado!', [
+        {
+          text: 'Continuar',
+          onPress: () => res(true),
+        },
+      ]),
     );
 
     goToPurchases();

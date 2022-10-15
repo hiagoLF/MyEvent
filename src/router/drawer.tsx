@@ -12,6 +12,7 @@ import {PurchaseData} from '../screens/PurchaseData';
 import {FinalizePurchase} from '../screens/FinalizePurchase';
 import {Sales} from '../screens/Sales';
 import {Transfer} from '../screens/Transfer';
+import QrScanner from '../screens/QrScanner';
 
 const DrawerNav = createDrawerNavigator();
 
@@ -32,6 +33,7 @@ export const DrawerRouter: React.FC = ({}) => {
       <DrawerNav.Screen name="FinalizePurchase" component={FinalizePurchase} />
       <DrawerNav.Screen name="Sales" component={Sales} />
       <DrawerNav.Screen name="Transfer" component={Transfer} />
+      <DrawerNav.Screen name="QrScanner" component={QrScanner} />
     </DrawerNav.Navigator>
   );
 };

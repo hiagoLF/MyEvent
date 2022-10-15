@@ -196,6 +196,17 @@ export const MyEvent: React.FC = () => {
                 </Text>
               </Card.Content>
             </Card>
+
+            <Button
+              style={{marginBottom: 10}}
+              icon="qrcode-scan"
+              mode="contained"
+              onPress={() =>
+                navigate('QrScanner' as never, {id: params.id} as never)
+              }>
+              ESCANEAR INGRESSO
+            </Button>
+
             {!myEventData?.closed && (
               <Button
                 style={{marginBottom: 10}}
