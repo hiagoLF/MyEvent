@@ -5,7 +5,7 @@ import {AxiosError, AxiosResponse} from 'axios';
 import React, {useEffect, useState} from 'react';
 import {Alert, FlatList, View} from 'react-native';
 import {RefreshControl} from 'react-native-gesture-handler';
-import {Card, Text} from 'react-native-paper';
+import {Card, FAB, Searchbar, Text} from 'react-native-paper';
 import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
 import {findEventsOnApi} from '../../services/api/events';
@@ -26,6 +26,8 @@ export const Home: React.FC = () => {
   const {navigate} = useNavigation();
   const [eventsList, setEventsList] = useState<AppEvent[]>([]);
   const [currentPage, setCurrentPage] = useState<undefined | number>(1);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const eventsMutation = useMutation(findEventsOnApi, {
     onSuccess: handleGetEventsSuccess,
@@ -51,24 +53,59 @@ export const Home: React.FC = () => {
   }
 
   useEffect(() => {
-    eventsMutation.mutate(currentPage as number);
+    eventsMutation.mutate({
+      page: currentPage as number,
+      query: searchMode ? searchValue : '',
+    });
   }, []);
 
   function handleOnEndReached() {
     if (!eventsMutation.isLoading && currentPage) {
-      eventsMutation.mutate(currentPage);
+      eventsMutation.mutate({
+        page: currentPage,
+        query: searchMode ? searchValue : '',
+      });
     }
   }
 
   function handleRefreshEvents() {
     setEventsList([]);
     setCurrentPage(1);
-    eventsMutation.mutate(1);
+    eventsMutation.mutate({page: 1, query: searchMode ? searchValue : ''});
+  }
+
+  function handleSearchButtonPress() {
+    setEventsList([]);
+    setCurrentPage(1);
+    eventsMutation.mutate({page: 1, query: searchMode ? searchValue : ''});
   }
 
   return (
     <View style={{flex: 1}}>
       <AppHeader title="Home" />
+
+      {searchMode && (
+        <Searchbar
+          placeholder="Search"
+          onChangeText={setSearchValue}
+          value={searchValue}
+          loading={eventsMutation.isLoading}
+          onSubmitEditing={handleSearchButtonPress}
+        />
+      )}
+
+      <FAB
+        icon={searchMode ? 'magnify-minus' : 'magnify'}
+        size={searchMode ? 'medium' : 'small'}
+        style={{
+          position: 'absolute',
+          margin: 16,
+          right: 0,
+          bottom: 0,
+          zIndex: 1,
+        }}
+        onPress={() => setSearchMode(prev => !prev)}
+      />
 
       <FlatList
         data={eventsList}

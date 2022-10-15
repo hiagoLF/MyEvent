@@ -4,10 +4,15 @@ import {MyEventResponse} from '../../screens/MyEvent';
 import {FindMyEventsResponse} from '../../screens/MyEvents';
 import {getTokenFromStorage} from '../../storage';
 
-export async function findEventsOnApi(page: number) {
+interface FindEventsProps {
+  page: number;
+  query: string;
+}
+
+export async function findEventsOnApi({page, query}: FindEventsProps) {
   const token = await getTokenFromStorage();
   return api.get('/events', {
-    params: {page},
+    params: {page, query},
     headers: {Authorization: `Bearer ${token}`},
   });
 }
@@ -34,12 +39,13 @@ export async function reserveProductFromApi(productId: string) {
   );
 }
 
-export async function findMyEventsOnApi(page: number) {
+export async function findMyEventsOnApi({page, query}: FindEventsProps) {
   const token = await getTokenFromStorage();
 
   return api.get<FindMyEventsResponse>('/my_events', {
     params: {
       page,
+      query,
     },
     headers: {Authorization: `Bearer ${token}`},
   });

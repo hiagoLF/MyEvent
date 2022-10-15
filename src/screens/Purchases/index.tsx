@@ -5,6 +5,7 @@ import {AxiosError, AxiosResponse} from 'axios';
 import React, {useEffect, useState} from 'react';
 import {Alert, View} from 'react-native';
 import {FlatList, RefreshControl} from 'react-native-gesture-handler';
+import {FAB, Searchbar} from 'react-native-paper';
 import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
 import LittleCard from '../../components/LittleCard';
@@ -29,6 +30,8 @@ export const Purchases: React.FC = () => {
 
   const [purchases, setMyPurchases] = useState<Purchase[]>([]);
   const [currentPage, setCurrentPage] = useState<undefined | number>(1);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const getPurchasesMutation = useMutation(findPurchasesOnApi, {
     onSuccess: handleGetPurchasesSuccess,
@@ -54,19 +57,37 @@ export const Purchases: React.FC = () => {
   }
 
   useEffect(() => {
-    getPurchasesMutation.mutate(currentPage as number);
+    getPurchasesMutation.mutate({
+      page: currentPage as number,
+      query: searchMode ? searchValue : '',
+    });
   }, []);
 
   function handleOnEndReached() {
     if (!getPurchasesMutation.isLoading && currentPage) {
-      getPurchasesMutation.mutate(currentPage);
+      getPurchasesMutation.mutate({
+        page: currentPage,
+        query: searchMode ? searchValue : '',
+      });
     }
   }
 
   function handleRefresh() {
     setCurrentPage(1);
     setMyPurchases([]);
-    getPurchasesMutation.mutate(1);
+    getPurchasesMutation.mutate({
+      page: 1,
+      query: searchMode ? searchValue : '',
+    });
+  }
+
+  function handleSearchButtonPress() {
+    setMyPurchases([]);
+    setCurrentPage(1);
+    getPurchasesMutation.mutate({
+      page: 1,
+      query: searchMode ? searchValue : '',
+    });
   }
 
   return (
@@ -75,6 +96,29 @@ export const Purchases: React.FC = () => {
         title="Compras"
         backAction
         onBackActionPress={() => navigate('Home' as never)}
+      />
+
+      {searchMode && (
+        <Searchbar
+          placeholder="Search"
+          onChangeText={setSearchValue}
+          value={searchValue}
+          loading={getPurchasesMutation.isLoading}
+          onSubmitEditing={handleSearchButtonPress}
+        />
+      )}
+
+      <FAB
+        icon={searchMode ? 'magnify-minus' : 'magnify'}
+        size={searchMode ? 'medium' : 'small'}
+        style={{
+          position: 'absolute',
+          margin: 16,
+          right: 0,
+          bottom: 0,
+          zIndex: 1,
+        }}
+        onPress={() => setSearchMode(prev => !prev)}
       />
 
       <FlatList

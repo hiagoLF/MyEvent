@@ -5,7 +5,7 @@ import {AxiosError, AxiosResponse} from 'axios';
 import React, {useEffect, useState} from 'react';
 import {Alert, View} from 'react-native';
 import {FlatList, RefreshControl} from 'react-native-gesture-handler';
-import {FAB} from 'react-native-paper';
+import {FAB, Searchbar} from 'react-native-paper';
 import {useMutation} from 'react-query';
 import {AppHeader} from '../../components/AppHeader';
 import LittleCard from '../../components/LittleCard';
@@ -25,6 +25,8 @@ export const MyEvents: React.FC = () => {
   const {navigate} = useNavigation();
   const [myEventsList, setMyEventsList] = useState<MyEvent[]>([]);
   const [currentPage, setCurrentPage] = useState<undefined | number>(1);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const getEventsMutation = useMutation(findMyEventsOnApi, {
     onSuccess: handleGetEventsSuccess,
@@ -50,19 +52,31 @@ export const MyEvents: React.FC = () => {
   }
 
   useEffect(() => {
-    getEventsMutation.mutate(currentPage as number);
+    getEventsMutation.mutate({
+      page: currentPage as number,
+      query: searchMode ? searchValue : '',
+    });
   }, []);
 
   function handleOnEndReached() {
     if (!getEventsMutation.isLoading && currentPage) {
-      getEventsMutation.mutate(currentPage);
+      getEventsMutation.mutate({
+        page: currentPage,
+        query: searchMode ? searchValue : '',
+      });
     }
   }
 
   function handleRefreshEvents() {
     setMyEventsList([]);
     setCurrentPage(1);
-    getEventsMutation.mutate(1);
+    getEventsMutation.mutate({page: 1, query: searchMode ? searchValue : ''});
+  }
+
+  function handleSearchButtonPress() {
+    setMyEventsList([]);
+    setCurrentPage(1);
+    getEventsMutation.mutate({page: 1, query: searchMode ? searchValue : ''});
   }
 
   return (
@@ -73,14 +87,38 @@ export const MyEvents: React.FC = () => {
         onBackActionPress={() => navigate('Home' as never)}
       />
 
+      {searchMode && (
+        <Searchbar
+          placeholder="Search"
+          onChangeText={setSearchValue}
+          value={searchValue}
+          loading={getEventsMutation.isLoading}
+          onSubmitEditing={handleSearchButtonPress}
+        />
+      )}
+
       <FAB
-        icon="plus"
+        icon={searchMode ? 'magnify-minus' : 'magnify'}
+        size={searchMode ? 'medium' : 'small'}
         style={{
           position: 'absolute',
           margin: 16,
           right: 0,
           bottom: 0,
-          zIndex: 5,
+          zIndex: 1,
+        }}
+        onPress={() => setSearchMode(prev => !prev)}
+      />
+
+      <FAB
+        icon="plus"
+        size="small"
+        style={{
+          position: 'absolute',
+          margin: 16,
+          right: 0,
+          bottom: 70,
+          zIndex: 1,
         }}
         variant="tertiary"
         onPress={() => navigate('CreateEditEvent' as never)}

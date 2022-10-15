@@ -3,10 +3,15 @@ import {PurchaseData} from '../../screens/MyPurchase';
 import {PurchasesResponse} from '../../screens/Purchases';
 import {getTokenFromStorage} from '../../storage';
 
-export async function findPurchasesOnApi(page: number) {
+interface FindPurchasesProps {
+  page: number;
+  query: string;
+}
+
+export async function findPurchasesOnApi({page, query}: FindPurchasesProps) {
   const token = await getTokenFromStorage();
   return api.get<PurchasesResponse>('/purchases', {
-    params: {page},
+    params: {page, query},
     headers: {Authorization: `Bearer ${token}`},
   });
 }

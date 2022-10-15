@@ -208,9 +208,11 @@ export function startServer() {
         }
 
         const page = req.queryParams?.page;
+        const query = req.queryParams?.query;
 
         const found = schema.events
           .all()
+          .filter(e => e.name.toLowerCase().includes(query.toLowerCase()))
           .sort((a, b) => {
             return Number(b.id) > Number(a.id) ? 1 : 0;
           })
@@ -321,11 +323,13 @@ export function startServer() {
         }
 
         const page = req.queryParams?.page;
+        const query = req.queryParams?.query;
 
         const user = schema.users.find(tokenFound.userId);
 
         const found = schema.purchases
           .where({userId: user.id})
+          .filter(e => e.event.name.toLowerCase().includes(query.toLowerCase()))
           .sort((a, b) => {
             return Number(b.id) > Number(a.id) ? 1 : 0;
           })
@@ -373,9 +377,11 @@ export function startServer() {
         }
 
         const page = req.queryParams?.page;
+        const query = req.queryParams?.query;
 
         const found = schema.events
           .where({userId: tokenFound.userId})
+          .filter(e => e.name.toLowerCase().includes(query.toLowerCase()))
           .sort((a, b) => {
             return Number(b.id) > Number(a.id) ? 1 : 0;
           })
