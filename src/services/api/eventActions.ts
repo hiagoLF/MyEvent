@@ -78,3 +78,12 @@ export async function createEventOnApi(data: EventDataToSendOnCreation) {
     },
   });
 }
+
+export async function removeEventRequest(eventId: string) {
+  const token = await getTokenFromStorage();
+
+  return api.delete('/event', {
+    params: {id: eventId},
+    headers: {Authorization: `Bearer ${token}`},
+  });
+}

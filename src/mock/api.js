@@ -82,7 +82,7 @@ export function startServer() {
           return faker.lorem.paragraph(3);
         },
         valor() {
-          return faker.random.numeric(5);
+          return faker.random.numeric(4);
         },
         imageUrl() {
           return faker.image.image();
@@ -124,6 +124,8 @@ export function startServer() {
         login: 'logado',
         name: 'Loago Ferreira',
         password: '123456',
+        sales: 65423,
+        available: 10000,
       });
       server.create('token', {
         userId: 2,
@@ -145,6 +147,10 @@ export function startServer() {
         city: 'Smallvile',
         state: 'Piauí',
         qr: generateRandomString(20),
+      });
+      server.create('event', {
+        user: hiagoLogado,
+        sell: 0,
       });
     },
     routes() {
@@ -525,6 +531,60 @@ export function startServer() {
         });
 
         return {id: created.id};
+      });
+
+      this.delete('/event', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const id = req.queryParams?.id;
+
+        const found = schema.events.find(id);
+
+        found.destroy();
+
+        return {message: 'OK'};
+      });
+
+      this.get('/sails', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const user = schema.users.find(tokenFound.userId);
+
+        const data = {
+          sales: user.sales,
+          available: user.available,
+        };
+
+        return data;
+      });
+
+      this.post('/transfer', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        const user = schema.users.find(tokenFound.userId);
+
+        const body = JSON.parse(req.requestBody);
+
+        user.update({
+          available: user.available - body.valor,
+        });
+
+        return {message: 'OK'};
       });
     },
   });

@@ -95,7 +95,7 @@ export const Home: React.FC = () => {
                   {new Intl.NumberFormat('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
-                  }).format(item.valor)}
+                  }).format(item.valor / 100)}
                 </Text>
               </Card.Content>
             </Card>

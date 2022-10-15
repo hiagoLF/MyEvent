@@ -99,7 +99,9 @@ const Event: React.FC = () => {
               {new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL',
-              }).format(getEventMutation.data?.data.event.valor as number)}
+              }).format(
+                (getEventMutation.data?.data.event.valor as number) / 100,
+              )}
             </Text>
           </Card.Content>
         </Card>

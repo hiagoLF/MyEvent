@@ -89,11 +89,11 @@ const MyPurchase: React.FC = () => {
               <Card.Content>
                 <Title>{purchaseData?.name}</Title>
                 <Text variant="titleMedium">
-                  Valor:
+                  Valor:{' '}
                   {new Intl.NumberFormat('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
-                  }).format(purchaseData?.value || 0)}
+                  }).format((purchaseData?.value || 0) / 100)}
                 </Text>
                 <Paragraph>{purchaseData?.description}</Paragraph>
               </Card.Content>

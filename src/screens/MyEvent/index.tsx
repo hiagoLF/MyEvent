@@ -11,6 +11,7 @@ import {AppHeader} from '../../components/AppHeader';
 import {
   closeEventRequest,
   openEventRequest,
+  removeEventRequest,
 } from '../../services/api/eventActions';
 import {findMyEventOnApi} from '../../services/api/events';
 
@@ -43,7 +44,7 @@ export interface MyEventResponse {
 export const MyEvent: React.FC = () => {
   const {params} = useRoute<ProfileScreenRouteProp>();
   const [myEventData, setMyEventData] = useState<undefined | MyEvent>();
-  const {navigate} = useNavigation();
+  const {navigate, reset} = useNavigation();
 
   console.log(myEventData);
 
@@ -112,6 +113,36 @@ export const MyEvent: React.FC = () => {
   const openEventMutation = useMutation(openEventRequest, {
     onSuccess: findMyEvent,
   });
+
+  const removerEventMutation = useMutation(removeEventRequest, {
+    onSuccess: goToMyEvents,
+  });
+
+  function goToMyEvents() {
+    reset({
+      routes: [
+        {
+          name: 'MyEvents' as never,
+          params: {},
+        },
+      ],
+    });
+  }
+
+  function handleRemoveEventButtonPress() {
+    Alert.alert(
+      'Remover evento?',
+      'Tem certeza que deseja remover este evento? Esta ação não poderá ser desfeita.',
+      [
+        {text: 'Cancelar'},
+        {
+          text: 'Continuar',
+          style: 'destructive',
+          onPress: () => removerEventMutation.mutate(params.id as string),
+        },
+      ],
+    );
+  }
 
   return (
     <View style={{flex: 1}}>
@@ -210,13 +241,17 @@ export const MyEvent: React.FC = () => {
               EDITAR EVENTO
             </Button>
 
-            <Button
-              style={{marginBottom: 10, backgroundColor: '#ff6262'}}
-              icon="delete"
-              mode="contained"
-              onPress={() => {}}>
-              REMOVER EVENTO
-            </Button>
+            {myEventData?.sell === 0 && (
+              <Button
+                style={{marginBottom: 10, backgroundColor: '#ff6262'}}
+                icon="delete"
+                mode="contained"
+                loading={removerEventMutation.isLoading}
+                disabled={removerEventMutation.isLoading}
+                onPress={handleRemoveEventButtonPress}>
+                REMOVER EVENTO
+              </Button>
+            )}
           </>
         )}
       </ScrollView>

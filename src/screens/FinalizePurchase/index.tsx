@@ -118,7 +118,7 @@ export const FinalizePurchase: React.FC = () => {
               {new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL',
-              }).format(params.purchase.valor as number)}
+              }).format((params.purchase.valor as number) / 100)}
             </Text>
           </Card.Content>
           <Card.Content>
