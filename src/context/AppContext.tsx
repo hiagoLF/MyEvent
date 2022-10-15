@@ -1,6 +1,6 @@
 import React, {ReactNode, useContext, useState} from 'react';
 import {createContext} from 'react';
-import {setOnStorage} from '../storage';
+import {deleteOnStorage, setOnStorage} from '../storage';
 
 interface AppProviderProps {
   children: ReactNode;
@@ -14,6 +14,7 @@ interface AuthProps {
 interface AuthenticationContextProps {
   defineAuth: (auth: AuthProps) => void;
   auth?: AuthProps;
+  removeAuth: () => Promise<void>;
 }
 
 const AppContext = createContext<AuthenticationContextProps>(
@@ -28,8 +29,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({children}) => {
     await setOnStorage('@MyEventToken', authData.token);
   }
 
+  async function removeAuth() {
+    await deleteOnStorage('@MyEventToken');
+    await deleteOnStorage('@MyEventPurchaseData');
+    await deleteOnStorage('@MyEventTransferData');
+    setAuth(undefined);
+  }
+
   return (
-    <AppContext.Provider value={{defineAuth, auth}}>
+    <AppContext.Provider value={{defineAuth, auth, removeAuth}}>
       {children}
     </AppContext.Provider>
   );

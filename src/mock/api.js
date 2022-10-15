@@ -118,6 +118,8 @@ export function startServer() {
         login: 'hiago',
         name: 'Hiago Leão Ferreira',
         password: '123456',
+        sales: 0,
+        available: 0,
       });
       const hiagoLogado = server.create('user', {
         id: 2,
@@ -214,8 +216,6 @@ export function startServer() {
           })
           .slice((page - 1) * 5, page * 5);
 
-        console.log(found.models.forEach(item => console.log(item.id)));
-
         return {data: found.models};
       });
 
@@ -224,9 +224,10 @@ export function startServer() {
         const stractedToken = token.split(' ')[1];
 
         const tokenFound = schema.tokens.findBy({token: stractedToken});
+        const user = schema.users.find(tokenFound.userId);
 
         if (tokenFound) {
-          return {message: 'OK'};
+          return {token: tokenFound.token, user: {name: user.name}};
         }
 
         return new Response(404, {}, {message: 'Token inválido'});
@@ -289,9 +290,6 @@ export function startServer() {
 
         const reservationFound = schema.reservations.find(body.reservationId);
 
-        console.log('Reservation >>> ', reservationFound);
-        console.log(schema.reservations.all().models);
-
         const eventFound = schema.events.find(reservationFound.eventId);
         const userFound = schema.users.find(reservationFound.userId);
 
@@ -339,8 +337,6 @@ export function startServer() {
             event: item.event,
           };
         });
-
-        console.log(formated);
 
         return {purchases: formated};
       });
@@ -390,8 +386,6 @@ export function startServer() {
           title: item.name,
           sell: item.sell,
         }));
-
-        console.log(formated);
 
         return {myEvents: formated};
       });
@@ -583,6 +577,19 @@ export function startServer() {
         user.update({
           available: user.available - body.valor,
         });
+
+        return {message: 'OK'};
+      });
+
+      this.delete('/login', (schema, req) => {
+        const token = req.requestHeaders.Authorization;
+        const stractedToken = token.split(' ')[1];
+        const tokenFound = schema.tokens.findBy({token: stractedToken});
+        if (!tokenFound) {
+          return new Response(403, {}, {message: 'Token Inválido'});
+        }
+
+        tokenFound.destroy();
 
         return {message: 'OK'};
       });

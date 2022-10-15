@@ -109,7 +109,8 @@ export const Login: React.FC = () => {
     retry: false,
   });
 
-  function handleVerifyTokenSuccess() {
+  function handleVerifyTokenSuccess(data: AxiosResponse<LoginResponse>) {
+    defineAuth(data.data);
     goToApplication();
   }
 

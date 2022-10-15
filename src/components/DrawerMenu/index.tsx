@@ -1,16 +1,44 @@
 /* eslint-disable react-native/no-inline-styles */
-// import {useNavigation, useRoute} from '@react-navigation/native';
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
 } from '@react-navigation/drawer';
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {Avatar, Drawer, Text} from 'react-native-paper';
+import {useMutation} from 'react-query';
+import {useAppContext} from '../../context/AppContext';
+import {logoutRequest} from '../../services/api/token';
 
 const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
   const currentScreen = props.state.routeNames.find(
     (route, key) => props.state.index === key,
   );
+
+  const {reset} = useNavigation();
+
+  const {removeAuth, auth} = useAppContext();
+
+  const logoutMutation = useMutation(logoutRequest, {
+    onSuccess: handleLogoutSuccessOrError,
+    onError: handleLogoutSuccessOrError,
+  });
+
+  async function handleLogoutSuccessOrError() {
+    await removeAuth();
+    reset({
+      routes: [
+        {
+          name: 'Start' as never,
+          params: {},
+        },
+      ],
+    });
+  }
+
+  async function handleLogoutButtonPress() {
+    logoutMutation.mutate();
+  }
 
   return (
     <DrawerContentScrollView style={{paddingTop: 20}} {...props}>
@@ -20,8 +48,15 @@ const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
           alignItems: 'center',
           marginBottom: 20,
         }}>
-        <Avatar.Text size={64} label="HL" />
-        <Text variant="titleLarge">Hiago Leão</Text>
+        <Avatar.Text
+          size={64}
+          label={(auth?.user.name || '')
+            .split(' ')
+            .map(item => item[0])
+            .join('')
+            .substring(0, 2)}
+        />
+        <Text variant="titleLarge">{auth?.user.name}</Text>
       </Drawer.Section>
 
       <Drawer.Section>
@@ -52,7 +87,7 @@ const DrawerMenu: React.FC<DrawerContentComponentProps> = props => {
         <Drawer.Item
           label="Sair"
           active={currentScreen === 'Start'}
-          onPress={() => props.navigation.navigate('Start' as never)}
+          onPress={handleLogoutButtonPress}
           icon="exit-to-app"
         />
       </Drawer.Section>
