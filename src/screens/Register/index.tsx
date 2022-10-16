@@ -48,7 +48,7 @@ export const Register: React.FC = () => {
   }
 
   function handleRegisterError(error: AxiosError) {
-    Alert.alert('Erro', error.response?.data.message);
+    Alert.alert('Erro', error.response?.data.message || error.message);
   }
 
   function handleRegisterSuccess() {
@@ -147,7 +147,9 @@ export const Register: React.FC = () => {
             icon="login-variant"
             mode="contained"
             onPress={handleSubmit(onSubmit)}
-            disabled={Object.keys(errors).length > 0}
+            disabled={
+              Object.keys(errors).length > 0 || registerMutation.isLoading
+            }
             loading={registerMutation.isLoading}>
             Registrar
           </Button>

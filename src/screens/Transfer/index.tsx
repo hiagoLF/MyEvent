@@ -120,7 +120,11 @@ export const Transfer: React.FC = () => {
 
   return (
     <View style={{flex: 1}}>
-      <AppHeader title="Vendas" backAction onBackActionPress={() => goBack()} />
+      <AppHeader
+        title="Transferir"
+        backAction
+        onBackActionPress={() => goBack()}
+      />
 
       <ScrollView
         refreshControl={

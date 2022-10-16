@@ -160,7 +160,7 @@ export function startServer() {
       this.namespace = '/api';
       this.timing = 400;
 
-      this.post('/users', (schema, req) => {
+      this.post('/user', (schema, req) => {
         const data = JSON.parse(req.requestBody);
 
         const found = schema.users.findBy({login: data.login});
@@ -563,8 +563,8 @@ export function startServer() {
         const user = schema.users.find(tokenFound.userId);
 
         const data = {
-          sales: user.sales,
-          available: user.available,
+          sales: user.sales || 0,
+          available: user.available || 0,
         };
 
         return data;
